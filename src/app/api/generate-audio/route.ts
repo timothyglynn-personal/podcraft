@@ -20,7 +20,12 @@ export async function POST(request: NextRequest) {
     const audioBuffer = await textToSpeech(script, voiceId);
 
     const id = generateId();
-    const audioUrl = await storeAudio(id, audioBuffer);
+    await storeAudio(id, audioBuffer);
+
+    // Use proxy URL for private blob stores, direct URL for local dev
+    const audioUrl = process.env.BLOB_READ_WRITE_TOKEN
+      ? `/api/audio/${id}`
+      : `/podcasts/${id}.mp3`;
 
     const wordCount = script.split(/\s+/).length;
     const durationSeconds = Math.round((wordCount / 150) * 60);
