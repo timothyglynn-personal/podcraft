@@ -11,9 +11,17 @@ import {
 } from "@/lib/types";
 import GeneratingStatus from "./GeneratingStatus";
 
+const VOICE_CATEGORIES = [
+  { key: "irish", label: "Irish" },
+  { key: "british", label: "British" },
+  { key: "american", label: "American" },
+] as const;
+
 export default function PodcastForm() {
   const router = useRouter();
   const [topic, setTopic] = useState("");
+  const [sourceUrls, setSourceUrls] = useState("");
+  const [showSources, setShowSources] = useState(false);
   const [style, setStyle] = useState<PodcastRequest["style"]>("news-briefing");
   const [lengthMinutes, setLengthMinutes] = useState<3 | 5 | 10>(5);
   const [voiceId, setVoiceId] = useState<string>(VOICE_OPTIONS[0].id);
@@ -28,14 +36,41 @@ export default function PodcastForm() {
     if (!topic.trim() || isGenerating) return;
 
     try {
-      // Step 1: Ingest articles
-      setStatus({ step: "ingesting", message: "Searching for articles..." });
-      const ingestRes = await fetch("/api/ingest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic }),
-      });
-      const { articles } = await ingestRes.json();
+      // Step 1: Ingest articles from URLs and/or NewsAPI
+      setStatus({ step: "ingesting", message: "Fetching content..." });
+
+      let articles: Article[] = [];
+
+      // Parse user-provided URLs first
+      const urls = sourceUrls
+        .split("\n")
+        .map((u) => u.trim())
+        .filter((u) => u.startsWith("http"));
+
+      if (urls.length > 0) {
+        const parseRes = await fetch("/api/parse-source", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ urls }),
+        });
+        const parseData = await parseRes.json();
+        if (parseData.articles) {
+          articles = parseData.articles;
+        }
+      }
+
+      // Also fetch from NewsAPI if we have fewer than 3 articles
+      if (articles.length < 3) {
+        const ingestRes = await fetch("/api/ingest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic }),
+        });
+        const ingestData = await ingestRes.json();
+        if (ingestData.articles) {
+          articles = [...articles, ...ingestData.articles];
+        }
+      }
 
       // Step 2: Generate script
       setStatus({ step: "scripting", message: "Writing your podcast script..." });
@@ -46,7 +81,7 @@ export default function PodcastForm() {
           topic,
           style,
           lengthMinutes,
-          articles: articles as Article[],
+          articles,
         }),
       });
       const { script } = await scriptRes.json();
@@ -113,6 +148,40 @@ export default function PodcastForm() {
             />
           </div>
 
+          {/* Source URLs (collapsible) */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowSources(!showSources)}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            >
+              <svg
+                className={`w-4 h-4 transition-transform ${showSources ? "rotate-90" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+              Add source URLs (optional)
+            </button>
+            {showSources && (
+              <div className="mt-2">
+                <textarea
+                  value={sourceUrls}
+                  onChange={(e) => setSourceUrls(e.target.value)}
+                  placeholder={"Paste article URLs, one per line:\nhttps://rte.ie/sport/gaa/...\nhttps://limerickleader.ie/..."}
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-gray-900 placeholder-gray-400 text-sm"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  We&apos;ll extract content from these pages to inform your podcast
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Style selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -161,7 +230,7 @@ export default function PodcastForm() {
             </div>
           </div>
 
-          {/* Voice selection */}
+          {/* Voice selection grouped by accent */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Voice
@@ -171,10 +240,16 @@ export default function PodcastForm() {
               onChange={(e) => setVoiceId(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-gray-900 bg-white"
             >
-              {VOICE_OPTIONS.map((voice) => (
-                <option key={voice.id} value={voice.id}>
-                  {voice.name} ({voice.accent}) - {voice.description}
-                </option>
+              {VOICE_CATEGORIES.map((cat) => (
+                <optgroup key={cat.key} label={`${cat.label} voices`}>
+                  {VOICE_OPTIONS.filter((v) => v.category === cat.key).map(
+                    (voice) => (
+                      <option key={voice.id} value={voice.id}>
+                        {voice.name} - {voice.description}
+                      </option>
+                    )
+                  )}
+                </optgroup>
               ))}
             </select>
           </div>
