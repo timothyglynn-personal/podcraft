@@ -7,7 +7,7 @@ const useVercelBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
 async function blobStoreAudio(id: string, audioBuffer: Buffer): Promise<string> {
   const { put } = await import("@vercel/blob");
   const blob = await put(`podcasts/${id}.mp3`, audioBuffer, {
-    access: "public",
+    access: "private",
     contentType: "audio/mpeg",
     addRandomSuffix: false,
   });
@@ -17,7 +17,7 @@ async function blobStoreAudio(id: string, audioBuffer: Buffer): Promise<string> 
 async function blobStoreMetadata(podcast: Podcast): Promise<void> {
   const { put } = await import("@vercel/blob");
   await put(`podcasts/${podcast.id}.json`, JSON.stringify(podcast, null, 2), {
-    access: "public",
+    access: "private",
     contentType: "application/json",
     addRandomSuffix: false,
   });
