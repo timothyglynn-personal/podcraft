@@ -9,6 +9,7 @@ async function blobStoreAudio(id: string, audioBuffer: Buffer): Promise<string> 
   const blob = await put(`podcasts/${id}.mp3`, audioBuffer, {
     access: "public",
     contentType: "audio/mpeg",
+    addRandomSuffix: false,
   });
   return blob.url;
 }
@@ -18,6 +19,7 @@ async function blobStoreMetadata(podcast: Podcast): Promise<void> {
   await put(`podcasts/${podcast.id}.json`, JSON.stringify(podcast, null, 2), {
     access: "public",
     contentType: "application/json",
+    addRandomSuffix: false,
   });
 }
 
