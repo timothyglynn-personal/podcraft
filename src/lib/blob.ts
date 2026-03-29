@@ -1,41 +1,40 @@
-import { put, list } from "@vercel/blob";
+import fs from "fs/promises";
+import path from "path";
 import { Podcast } from "./types";
+
+const STORAGE_DIR = path.join(process.cwd(), "public", "podcasts");
+
+async function ensureDir() {
+  await fs.mkdir(STORAGE_DIR, { recursive: true });
+}
 
 export async function storeAudio(
   id: string,
   audioBuffer: Buffer
 ): Promise<string> {
-  const blob = await put(`podcasts/${id}.mp3`, audioBuffer, {
-    access: "public",
-    contentType: "audio/mpeg",
-  });
-  return blob.url;
+  await ensureDir();
+  const filePath = path.join(STORAGE_DIR, `${id}.mp3`);
+  await fs.writeFile(filePath, audioBuffer);
+  return `/podcasts/${id}.mp3`;
 }
 
-export async function storeMetadata(
-  podcast: Podcast
-): Promise<void> {
-  await put(
-    `podcasts/${podcast.id}.json`,
-    JSON.stringify(podcast, null, 2),
-    {
-      access: "public",
-      contentType: "application/json",
-    }
-  );
+export async function storeMetadata(podcast: Podcast): Promise<void> {
+  await ensureDir();
+  const filePath = path.join(STORAGE_DIR, `${podcast.id}.json`);
+  await fs.writeFile(filePath, JSON.stringify(podcast, null, 2));
 }
 
 export async function listPodcasts(): Promise<Podcast[]> {
   try {
-    const { blobs } = await list({ prefix: "podcasts/" });
-    const jsonBlobs = blobs.filter((b) => b.pathname.endsWith(".json"));
+    await ensureDir();
+    const files = await fs.readdir(STORAGE_DIR);
+    const jsonFiles = files.filter((f) => f.endsWith(".json"));
 
     const podcasts: Podcast[] = [];
-    for (const blob of jsonBlobs) {
+    for (const file of jsonFiles) {
       try {
-        const response = await fetch(blob.url);
-        const podcast = await response.json();
-        podcasts.push(podcast);
+        const content = await fs.readFile(path.join(STORAGE_DIR, file), "utf-8");
+        podcasts.push(JSON.parse(content));
       } catch {
         continue;
       }
@@ -51,11 +50,9 @@ export async function listPodcasts(): Promise<Podcast[]> {
 
 export async function getPodcast(id: string): Promise<Podcast | null> {
   try {
-    const { blobs } = await list({ prefix: `podcasts/${id}.json` });
-    if (blobs.length === 0) return null;
-
-    const response = await fetch(blobs[0].url);
-    return await response.json();
+    const filePath = path.join(STORAGE_DIR, `${id}.json`);
+    const content = await fs.readFile(filePath, "utf-8");
+    return JSON.parse(content);
   } catch {
     return null;
   }
