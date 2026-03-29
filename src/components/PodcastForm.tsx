@@ -66,11 +66,12 @@ export default function PodcastForm() {
         }),
       });
 
+      const audioData = await audioRes.json();
       if (!audioRes.ok) {
-        throw new Error("Audio generation failed");
+        throw new Error(audioData.error || "Audio generation failed");
       }
 
-      const { podcast } = await audioRes.json();
+      const { podcast } = audioData;
 
       // Step 4: Done
       setStatus({ step: "done", message: "Your podcast is ready!" });

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateScript } from "@/lib/claude";
 import { Article } from "@/lib/types";
 
+export const maxDuration = 30;
+
 export async function POST(request: NextRequest) {
   try {
     const { topic, style, lengthMinutes, articles } = await request.json();

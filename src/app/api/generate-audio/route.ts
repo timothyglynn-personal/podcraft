@@ -3,6 +3,8 @@ import { textToSpeech } from "@/lib/elevenlabs";
 import { storeAudio, storeMetadata } from "@/lib/blob";
 import { Podcast } from "@/lib/types";
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const { script, title, topic, style, voiceId, sources } =
@@ -40,8 +42,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ podcast });
   } catch (error) {
     console.error("Audio generation error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to generate audio" },
+      { error: `Failed to generate audio: ${message}` },
       { status: 500 }
     );
   }
