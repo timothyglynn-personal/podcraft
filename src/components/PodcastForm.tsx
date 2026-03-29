@@ -6,16 +6,11 @@ import {
   PodcastRequest,
   GenerationStatus,
   VOICE_OPTIONS,
+  VOICE_CATEGORIES,
   STYLE_OPTIONS,
   Article,
 } from "@/lib/types";
 import GeneratingStatus from "./GeneratingStatus";
-
-const VOICE_CATEGORIES = [
-  { key: "irish", label: "Irish" },
-  { key: "british", label: "British" },
-  { key: "american", label: "American" },
-] as const;
 
 export default function PodcastForm() {
   const router = useRouter();
@@ -171,12 +166,12 @@ export default function PodcastForm() {
                 <textarea
                   value={sourceUrls}
                   onChange={(e) => setSourceUrls(e.target.value)}
-                  placeholder={"Paste article URLs, one per line:\nhttps://rte.ie/sport/gaa/...\nhttps://limerickleader.ie/..."}
+                  placeholder={"Paste article or YouTube URLs, one per line:\nhttps://rte.ie/sport/gaa/...\nhttps://youtube.com/watch?v=..."}
                   rows={3}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-gray-900 placeholder-gray-400 text-sm"
                 />
                 <p className="text-xs text-gray-400 mt-1">
-                  We&apos;ll extract content from these pages to inform your podcast
+                  We&apos;ll extract content from articles and YouTube transcripts to inform your podcast
                 </p>
               </div>
             )}
