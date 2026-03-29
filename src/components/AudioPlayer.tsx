@@ -68,6 +68,7 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
   };
 
   const formatTime = (seconds: number) => {
+    if (!isFinite(seconds) || isNaN(seconds)) return "0:00";
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}:${s.toString().padStart(2, "0")}`;
@@ -86,7 +87,7 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
         <input
           type="range"
           min={0}
-          max={duration || 0}
+          max={isFinite(duration) ? duration : 0}
           value={currentTime}
           onChange={seek}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
