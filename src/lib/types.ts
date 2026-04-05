@@ -149,11 +149,28 @@ export type FlowStep =
   | "generating"
   | "player";
 
+export interface PodcastFeedback {
+  podcastId: string;
+  quickTags: string[];
+  textFeedback: string;
+  voiceTranscript: string;
+  createdAt: string;
+}
+
+export interface UserPreferences {
+  defaultStyle: PodcastRequest["style"];
+  defaultLength: 3 | 5 | 10;
+  defaultAccent: string;
+  defaultVoiceId: string;
+}
+
 export interface UserProfile {
   name: string;
   location: string;
   origin: string;
   podcasts: string[];
+  feedback: PodcastFeedback[];
+  preferences: UserPreferences;
   createdAt: string;
 }
 

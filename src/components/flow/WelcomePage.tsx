@@ -32,6 +32,13 @@ export default function WelcomePage() {
       location: location.trim(),
       origin: origin.trim(),
       podcasts: [],
+      feedback: [],
+      preferences: {
+        defaultStyle: "news-briefing",
+        defaultLength: 5,
+        defaultAccent: accent,
+        defaultVoiceId: voiceId,
+      },
       createdAt: new Date().toISOString(),
     });
     setActiveUser(name.trim());

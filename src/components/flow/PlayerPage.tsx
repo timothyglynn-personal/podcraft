@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useFlow } from "./FlowContext";
 import AudioPlayer from "../AudioPlayer";
+import FeedbackModal from "../FeedbackModal";
 
 export default function PlayerPage() {
   const { state, reset, setShowProfile } = useFlow();
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
   const podcast = state.generatedPodcast;
 
   if (!podcast) {
@@ -58,6 +62,35 @@ export default function PlayerPage() {
           <AudioPlayer src={podcast.audioUrl} title={podcast.title} />
         </div>
 
+        {/* Feedback prompt */}
+        {!feedbackGiven && (
+          <button
+            onClick={() => setShowFeedback(true)}
+            className="w-full glass-card p-4 mb-6 text-left hover:bg-surface-hover transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">💭</span>
+              <div>
+                <div className="text-sm font-medium text-white group-hover:text-brand-300 transition-colors">
+                  How was this podcast?
+                </div>
+                <div className="text-xs text-gray-400">
+                  Your feedback helps us improve future episodes
+                </div>
+              </div>
+              <svg className="w-5 h-5 text-gray-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </button>
+        )}
+
+        {feedbackGiven && (
+          <div className="glass-card p-4 mb-6 text-center">
+            <span className="text-sm text-green-400">Thanks for your feedback! We&apos;ll use it next time.</span>
+          </div>
+        )}
+
         {/* Script viewer */}
         <details className="glass-card mb-6">
           <summary className="p-4 cursor-pointer text-sm font-medium text-gray-300 hover:text-white transition-colors">
@@ -105,10 +138,21 @@ export default function PlayerPage() {
             }}
             className="px-4 py-3 glass-card hover:bg-surface-hover transition-colors text-gray-300 text-sm font-medium"
           >
-            Share Link
+            Share
           </button>
         </div>
       </div>
+
+      {/* Feedback Modal */}
+      {showFeedback && (
+        <FeedbackModal
+          podcastId={podcast.id}
+          onClose={() => {
+            setShowFeedback(false);
+            setFeedbackGiven(true);
+          }}
+        />
+      )}
     </div>
   );
 }

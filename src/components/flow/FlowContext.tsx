@@ -11,7 +11,8 @@ import {
   VOICE_CATEGORIES,
   SuggestedSource,
 } from "@/lib/types";
-import { getActiveProfile, saveProfile, setActiveUser, addPodcastToProfile } from "@/lib/profile";
+import { getActiveProfile, saveProfile, setActiveUser, addPodcastToProfile, getPreferences } from "@/lib/profile";
+import { getRecentFeedbackSummary } from "@/lib/feedback";
 
 const STEP_ORDER: FlowStep[] = [
   "welcome",
@@ -64,18 +65,23 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<FlowState>(initialState);
   const [showProfile, setShowProfile] = useState(false);
 
-  // Check for existing user on mount
+  // Check for existing user on mount — load profile + preferences
   useEffect(() => {
     const profile = getActiveProfile();
     if (profile) {
+      const prefs = getPreferences();
+      const accent = prefs.defaultAccent || guessAccentFromOrigin(profile.origin);
+      const voiceId = prefs.defaultVoiceId || guessVoiceFromOrigin(profile.origin);
       setState((prev) => ({
         ...prev,
         step: "topic",
         userName: profile.name,
         userLocation: profile.location,
         userOrigin: profile.origin,
-        accent: guessAccentFromOrigin(profile.origin),
-        voiceId: guessVoiceFromOrigin(profile.origin),
+        style: prefs.defaultStyle || prev.style,
+        lengthMinutes: prefs.defaultLength || prev.lengthMinutes,
+        accent,
+        voiceId,
       }));
     }
   }, []);
@@ -203,6 +209,19 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
           description: textSources.join(", "),
           content: `The user suggested these additional sources for research: ${textSources.join(", ")}. Please incorporate knowledge from these sources.`,
           source: "User-provided",
+          url: "",
+          publishedAt: new Date().toISOString(),
+        });
+      }
+
+      // Add feedback context for the learning loop
+      const feedbackSummary = getRecentFeedbackSummary();
+      if (feedbackSummary) {
+        articles.unshift({
+          title: "Listener feedback from previous episodes",
+          description: feedbackSummary,
+          content: `LISTENER PREFERENCES (use these to adjust tone and style): ${feedbackSummary}`,
+          source: "User feedback",
           url: "",
           publishedAt: new Date().toISOString(),
         });

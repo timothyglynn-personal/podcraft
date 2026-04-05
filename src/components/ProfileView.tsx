@@ -1,28 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Podcast } from "@/lib/types";
-import { getActiveProfile, clearActiveUser } from "@/lib/profile";
+import { Podcast, PodcastRequest, STYLE_OPTIONS, VOICE_CATEGORIES, VOICE_OPTIONS } from "@/lib/types";
+import { getActiveProfile, clearActiveUser, updatePreferences, getPreferences, deletePodcastFromProfile } from "@/lib/profile";
+import { getAllFeedback } from "@/lib/feedback";
 import PodcastCard from "./PodcastCard";
 
 interface ProfileViewProps {
   onClose: () => void;
 }
 
+type Tab = "podcasts" | "preferences" | "feedback";
+
 export default function ProfileView({ onClose }: ProfileViewProps) {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>("podcasts");
   const profile = getActiveProfile();
+  const prefs = getPreferences();
+  const feedback = getAllFeedback();
 
   useEffect(() => {
     if (!profile) return;
     const allPodcasts: Podcast[] = JSON.parse(
       localStorage.getItem("podcraft-podcasts") || "[]"
     );
-    // Filter to this user's podcasts
     const userPodcasts = allPodcasts.filter((p) =>
       profile.podcasts.includes(p.id)
     );
-    // If no profile podcast IDs yet, show all (backward compat)
     setPodcasts(userPodcasts.length > 0 ? userPodcasts : allPodcasts);
   }, [profile]);
 
@@ -31,25 +35,31 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
     window.location.reload();
   };
 
+  const handleDeletePodcast = (podcastId: string) => {
+    deletePodcastFromProfile(podcastId);
+    setPodcasts((prev) => prev.filter((p) => p.id !== podcastId));
+  };
+
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "podcasts", label: "Podcasts" },
+    { key: "preferences", label: "Settings" },
+    { key: "feedback", label: "Feedback" },
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Panel */}
       <div className="relative w-full max-w-lg bg-surface-mid border-t border-brand-500/20 rounded-t-2xl max-h-[85vh] overflow-y-auto animate-slide-in">
-        {/* Handle */}
         <div className="flex justify-center py-3">
           <div className="w-10 h-1 rounded-full bg-gray-600" />
         </div>
 
         <div className="px-5 pb-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold text-white">
-                {profile?.name || "Your Profile"}
-              </h2>
+              <h2 className="text-lg font-bold text-white">{profile?.name || "Profile"}</h2>
               {profile && (
                 <p className="text-sm text-gray-400">
                   {profile.location} &middot; From {profile.origin}
@@ -66,28 +76,165 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
             </button>
           </div>
 
-          {/* Podcasts */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-300 mb-3">
-              Your Podcasts ({podcasts.length})
-            </h3>
-            {podcasts.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 text-sm">
-                No podcasts yet. Create your first one!
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {podcasts.map((podcast) => (
-                  <PodcastCard key={podcast.id} podcast={podcast} />
-                ))}
-              </div>
-            )}
+          {/* Tabs */}
+          <div className="flex gap-1 mb-5 bg-surface-dark rounded-xl p-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                  activeTab === tab.key
+                    ? "bg-brand-600/20 text-brand-300"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
+
+          {/* Podcasts tab */}
+          {activeTab === "podcasts" && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                Your Podcasts ({podcasts.length})
+              </h3>
+              {podcasts.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  No podcasts yet. Create your first one!
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {podcasts.map((podcast) => (
+                    <div key={podcast.id} className="relative group">
+                      <PodcastCard podcast={podcast} />
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeletePodcast(podcast.id);
+                        }}
+                        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                        title="Delete podcast"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Preferences tab */}
+          {activeTab === "preferences" && (
+            <div className="space-y-5">
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Default style</label>
+                <select
+                  value={prefs.defaultStyle}
+                  onChange={(e) => updatePreferences({ defaultStyle: e.target.value as PodcastRequest["style"] })}
+                  className="w-full px-4 py-3 rounded-xl bg-surface-dark border border-brand-500/20 text-white text-sm outline-none"
+                >
+                  {STYLE_OPTIONS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.icon} {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Default length</label>
+                <div className="flex gap-3">
+                  {([3, 5, 10] as const).map((mins) => (
+                    <button
+                      key={mins}
+                      onClick={() => updatePreferences({ defaultLength: mins })}
+                      className={`flex-1 py-2 rounded-xl border text-sm font-medium transition-all ${
+                        prefs.defaultLength === mins
+                          ? "border-brand-500 bg-brand-600/10 text-brand-300"
+                          : "border-surface-hover text-gray-400"
+                      }`}
+                    >
+                      {mins} min
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Default voice</label>
+                <select
+                  value={prefs.defaultVoiceId || ""}
+                  onChange={(e) => {
+                    const voice = VOICE_OPTIONS.find((v) => v.id === e.target.value);
+                    updatePreferences({
+                      defaultVoiceId: e.target.value,
+                      defaultAccent: voice?.category || prefs.defaultAccent,
+                    });
+                  }}
+                  className="w-full px-4 py-3 rounded-xl bg-surface-dark border border-brand-500/20 text-white text-sm outline-none"
+                >
+                  {VOICE_CATEGORIES.map((cat) => (
+                    <optgroup key={cat.key} label={`${cat.label} voices`}>
+                      {VOICE_OPTIONS.filter((v) => v.category === cat.key).map((voice) => (
+                        <option key={voice.id} value={voice.id}>
+                          {voice.name} - {voice.description}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Feedback tab */}
+          {activeTab === "feedback" && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                Your Feedback ({feedback.length})
+              </h3>
+              {feedback.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  No feedback yet. Listen to a podcast and share your thoughts!
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {feedback.slice(0, 20).map((fb, i) => (
+                    <div key={i} className="glass-card p-3">
+                      {fb.quickTags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {fb.quickTags.map((tag) => (
+                            <span key={tag} className="px-2 py-0.5 bg-brand-600/20 text-brand-300 text-xs rounded-full">
+                              {tag.replace(/-/g, " ")}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {fb.textFeedback && (
+                        <p className="text-sm text-gray-300">{fb.textFeedback}</p>
+                      )}
+                      {fb.voiceTranscript && (
+                        <p className="text-sm text-gray-400 italic mt-1">
+                          🎤 &ldquo;{fb.voiceTranscript}&rdquo;
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-2">
+                        {new Date(fb.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Switch user */}
           <button
             onClick={handleSwitchUser}
-            className="w-full py-3 text-sm text-gray-400 hover:text-white border border-surface-hover rounded-xl hover:bg-surface-card transition-all"
+            className="w-full mt-6 py-3 text-sm text-gray-400 hover:text-white border border-surface-hover rounded-xl hover:bg-surface-card transition-all"
           >
             Switch User
           </button>
