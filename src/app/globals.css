@@ -2,17 +2,114 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0a1628;
+  color: #e2e8f0;
 }
 
+/* Glass card effect */
+.glass-card {
+  background: rgba(26, 39, 68, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(89, 148, 250, 0.15);
+  border-radius: 1rem;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #5994fa, #8ebafd, #bcd4fe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animated gradient background orb */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-orb-1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #3370f6, #1a53eb);
+  top: -100px;
+  right: -100px;
+  animation: float 8s ease-in-out infinite;
+}
+
+.bg-orb-2 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, #5994fa, #3370f6);
+  bottom: -50px;
+  left: -50px;
+  animation: float 10s ease-in-out infinite reverse;
+}
+
+/* Style selection card glow */
+.style-card-selected {
+  border-color: #3370f6;
+  box-shadow: 0 0 0 1px #3370f6, 0 0 20px rgba(51, 112, 246, 0.2);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111d33;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3370f6;
+  border-radius: 3px;
+}
+
+/* Range input styling */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   height: 16px;
   width: 16px;
   border-radius: 50%;
-  background: #2563eb;
+  background: #3370f6;
   cursor: pointer;
   margin-top: -4px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #223350;
+}
+
+/* Progress shimmer */
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(51, 112, 246, 0.3), transparent);
+  background-size: 200% 100%;
+  animation: progress 2s ease-in-out infinite;
+}
+
+/* Beaker bubbles for generation page */
+@keyframes bubble {
+  0% { transform: translateY(0) scale(1); opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { transform: translateY(-60px) scale(0.3); opacity: 0; }
+}
+
+.bubble {
+  animation: bubble 2s ease-in infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }

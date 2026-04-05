@@ -1,6 +1,6 @@
 export interface PodcastRequest {
   topic: string;
-  style: "news-briefing" | "deep-dive" | "casual-chat" | "storytelling";
+  style: "news-briefing" | "deep-dive" | "casual-chat" | "storytelling" | "education-session";
   lengthMinutes: 3 | 5 | 10;
   accent: string;
   voiceId: string;
@@ -135,4 +135,48 @@ export const STYLE_OPTIONS = [
   { value: "deep-dive" as const, label: "Deep Dive", description: "In-depth analysis of a topic", icon: "🔍" },
   { value: "casual-chat" as const, label: "Casual Chat", description: "Relaxed, conversational tone", icon: "💬" },
   { value: "storytelling" as const, label: "Storytelling", description: "Narrative-driven episode", icon: "📖" },
+  { value: "education-session" as const, label: "Education Session", description: "Structured learning on a topic", icon: "🎓" },
 ] as const;
+
+// --- V2 Types ---
+
+export type FlowStep =
+  | "welcome"
+  | "topic"
+  | "style"
+  | "suggested-sources"
+  | "extra-sources"
+  | "generating"
+  | "player";
+
+export interface UserProfile {
+  name: string;
+  location: string;
+  origin: string;
+  podcasts: string[];
+  createdAt: string;
+}
+
+export interface SuggestedSource {
+  name: string;
+  url: string;
+  reason: string;
+  selected: boolean;
+}
+
+export interface FlowState {
+  step: FlowStep;
+  userName: string;
+  userLocation: string;
+  userOrigin: string;
+  topic: string;
+  style: PodcastRequest["style"];
+  lengthMinutes: 3 | 5 | 10;
+  suggestedSources: SuggestedSource[];
+  additionalUrls: string;
+  additionalContext: string;
+  accent: string;
+  voiceId: string;
+  generatedPodcast: Podcast | null;
+  status: GenerationStatus;
+}

@@ -21,20 +21,20 @@ export default function PodcastCard({ podcast }: { podcast: Podcast }) {
 
   return (
     <Link href={`/podcast/${podcast.id}`}>
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer border border-gray-100">
+      <div className="glass-card p-4 cursor-pointer hover:bg-surface-hover transition-all">
         <div className="flex items-start gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0">
+          <div className="w-12 h-12 bg-gradient-to-br from-brand-500 to-brand-700 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0">
             🎙️
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-gray-900 truncate text-sm">
+            <h3 className="font-semibold text-white truncate text-sm">
               {podcast.title}
             </h3>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-400 mt-1">
               {formatDuration(podcast.durationSeconds)} &middot;{" "}
               {formatDate(podcast.createdAt)}
             </p>
-            <span className="inline-block mt-2 px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full">
+            <span className="inline-block mt-2 px-2 py-0.5 bg-brand-600/20 text-brand-300 text-xs rounded-full">
               {podcast.style}
             </span>
           </div>

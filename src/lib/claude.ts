@@ -8,6 +8,7 @@ const STYLE_PROMPTS: Record<string, string> = {
   "deep-dive": "You are a thoughtful podcast host doing an in-depth analysis. Explore the nuances, provide context, ask rhetorical questions, and give your informed take. Take time to explain why things matter.",
   "casual-chat": "You are a friendly podcast host having a relaxed conversation with the listener. Use casual language, share opinions naturally, throw in the occasional aside or joke. Feel like a knowledgeable friend catching them up.",
   "storytelling": "You are a compelling storyteller weaving a narrative. Open with a hook, build tension, use vivid descriptions, and bring the listener on a journey. Make facts feel like story beats.",
+  "education-session": "You are an engaging educator delivering a structured lesson. Break the topic into clear sections, define key terms, use examples and analogies, and check understanding with rhetorical questions. Build from fundamentals to advanced points. Close with a summary of key takeaways.",
 };
 
 const WORDS_PER_MINUTE = 150;
@@ -90,6 +91,7 @@ function generateTitle(topic: string, style: string): string {
     "deep-dive": "Deep Dive:",
     "casual-chat": "Chat:",
     "storytelling": "Story:",
+    "education-session": "Learn:",
   };
   return `${prefix[style] || ""} ${topic}`.trim();
 }

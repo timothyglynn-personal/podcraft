@@ -36,7 +36,6 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
-
     if (isPlaying) {
       audio.pause();
     } else {
@@ -75,10 +74,10 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-lg p-6">
+    <div className="w-full">
       <audio ref={audioRef} src={src} preload="metadata" />
 
-      <h3 className="font-semibold text-gray-900 mb-4 text-center truncate">
+      <h3 className="font-semibold text-white mb-4 text-center truncate text-sm">
         {title}
       </h3>
 
@@ -90,9 +89,9 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
           max={isFinite(duration) ? duration : 0}
           value={currentTime}
           onChange={seek}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          className="w-full h-1.5 rounded-lg appearance-none cursor-pointer"
         />
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
+        <div className="flex justify-between text-xs text-gray-400 mt-1">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>
@@ -102,7 +101,7 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
       <div className="flex items-center justify-center gap-4">
         <button
           onClick={() => skip(-15)}
-          className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="p-2 text-gray-400 hover:text-white transition-colors"
           aria-label="Rewind 15 seconds"
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -112,7 +111,7 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
 
         <button
           onClick={togglePlay}
-          className="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center transition-colors shadow-md"
+          className="w-14 h-14 bg-brand-600 hover:bg-brand-700 text-white rounded-full flex items-center justify-center transition-colors shadow-lg shadow-brand-600/30"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? (
@@ -129,7 +128,7 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
 
         <button
           onClick={() => skip(30)}
-          className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="p-2 text-gray-400 hover:text-white transition-colors"
           aria-label="Forward 30 seconds"
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -139,7 +138,7 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
 
         <button
           onClick={changeSpeed}
-          className="ml-2 px-3 py-1 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+          className="ml-2 px-3 py-1 text-sm font-medium text-gray-400 bg-surface-card hover:bg-surface-hover rounded-full transition-colors"
         >
           {playbackRate}x
         </button>
