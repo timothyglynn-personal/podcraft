@@ -1,0 +1,18 @@
+{
+  "name": "PodCraft",
+  "short_name": "PodCraft",
+  "description": "AI-powered podcasts, tailored to you",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1628",
+  "theme_color": "#1a53eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
