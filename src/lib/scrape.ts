@@ -1,4 +1,5 @@
 import { Article } from "./types";
+import { isYouTubeUrl, extractYouTubeTranscript } from "./youtube";
 
 export async function scrapeUrl(url: string): Promise<Article | null> {
   try {
@@ -131,4 +132,41 @@ export function decodeHtmlEntities(text: string): string {
     .replace(/&#x27;/g, "'")
     .replace(/&#x2F;/g, "/")
     .replace(/&nbsp;/g, " ");
+}
+
+// Scrape a single URL — handles both web pages and YouTube
+export async function scrapeAny(url: string): Promise<Article | null> {
+  if (isYouTubeUrl(url)) {
+    return extractYouTubeTranscript(url);
+  }
+  return scrapeUrl(url);
+}
+
+// Scrape multiple URLs in parallel with concurrency limit
+export async function scrapeMultipleUrls(
+  urls: string[],
+  concurrency = 3
+): Promise<Article[]> {
+  const results: Article[] = [];
+  const queue = [...urls];
+
+  async function worker() {
+    while (queue.length > 0) {
+      const url = queue.shift();
+      if (!url) break;
+      try {
+        const article = await scrapeAny(url);
+        if (article) results.push(article);
+      } catch (e) {
+        console.error(`Failed to scrape ${url}:`, e);
+      }
+    }
+  }
+
+  const workers = Array(Math.min(concurrency, urls.length))
+    .fill(null)
+    .map(() => worker());
+
+  await Promise.all(workers);
+  return results;
 }
