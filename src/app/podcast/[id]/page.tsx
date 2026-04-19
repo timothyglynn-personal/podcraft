@@ -12,13 +12,23 @@ export default function PodcastPage() {
   const [podcast, setPodcast] = useState<Podcast | null>(null);
 
   useEffect(() => {
+    // Try localStorage first (for podcasts created in this session)
     const saved = JSON.parse(
       localStorage.getItem("podcraft-podcasts") || "[]"
     ) as Podcast[];
     const found = saved.find((p) => p.id === id);
     if (found) {
       setPodcast(found);
+      return;
     }
+
+    // Fall back to server (for subscription-generated podcasts)
+    fetch(`/api/podcasts?id=${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.podcast) setPodcast(data.podcast);
+      })
+      .catch(() => {});
   }, [id]);
 
   if (!podcast) {

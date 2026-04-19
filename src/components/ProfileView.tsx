@@ -1,20 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Podcast, PodcastRequest, STYLE_OPTIONS, VOICE_CATEGORIES, VOICE_OPTIONS } from "@/lib/types";
+import { useSession } from "next-auth/react";
+import { Podcast, PodcastRequest, Subscription, STYLE_OPTIONS, VOICE_CATEGORIES, VOICE_OPTIONS } from "@/lib/types";
 import { getActiveProfile, clearActiveUser, updatePreferences, getPreferences, deletePodcastFromProfile } from "@/lib/profile";
 import { getAllFeedback } from "@/lib/feedback";
 import PodcastCard from "./PodcastCard";
+import SubscriptionCard from "./SubscriptionCard";
 
 interface ProfileViewProps {
   onClose: () => void;
 }
 
-type Tab = "podcasts" | "preferences" | "feedback";
+type Tab = "podcasts" | "subscriptions" | "preferences" | "feedback";
 
 export default function ProfileView({ onClose }: ProfileViewProps) {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("podcasts");
+  const { data: session } = useSession();
   const profile = getActiveProfile();
   const prefs = getPreferences();
   const feedback = getAllFeedback();
@@ -30,6 +34,15 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
     setPodcasts(userPodcasts.length > 0 ? userPodcasts : allPodcasts);
   }, [profile]);
 
+  // Load subscriptions from server
+  useEffect(() => {
+    if (!session?.user) return;
+    fetch("/api/subscriptions")
+      .then((r) => r.json())
+      .then((data) => setSubscriptions(data.subscriptions || []))
+      .catch(() => {});
+  }, [session]);
+
   const handleSwitchUser = () => {
     clearActiveUser();
     window.location.reload();
@@ -40,8 +53,22 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
     setPodcasts((prev) => prev.filter((p) => p.id !== podcastId));
   };
 
+  const handlePauseSubscription = async (id: string) => {
+    // Toggle active state — for now just deactivate
+    await fetch(`/api/subscriptions?id=${id}`, { method: "DELETE" });
+    setSubscriptions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, active: !s.active } : s))
+    );
+  };
+
+  const handleCancelSubscription = async (id: string) => {
+    await fetch(`/api/subscriptions?id=${id}`, { method: "DELETE" });
+    setSubscriptions((prev) => prev.filter((s) => s.id !== id));
+  };
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "podcasts", label: "Podcasts" },
+    ...(session ? [{ key: "subscriptions" as Tab, label: "Subs" }] : []),
     { key: "preferences", label: "Settings" },
     { key: "feedback", label: "Feedback" },
   ];
@@ -120,6 +147,31 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
                         ✕
                       </button>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Subscriptions tab */}
+          {activeTab === "subscriptions" && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                Your Subscriptions ({subscriptions.length})
+              </h3>
+              {subscriptions.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  No subscriptions yet. Create a daily or weekly podcast to get started!
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {subscriptions.map((sub) => (
+                    <SubscriptionCard
+                      key={sub.id}
+                      subscription={sub}
+                      onPause={handlePauseSubscription}
+                      onCancel={handleCancelSubscription}
+                    />
                   ))}
                 </div>
               )}
