@@ -39,3 +39,8 @@ next-env.d.ts
 # capacitor native builds
 /ios/
 /android/
+
+.projects/cache
+.projects/vault
+.env
+.env.local

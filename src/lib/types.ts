@@ -181,6 +181,8 @@ export interface SuggestedSource {
   selected: boolean;
 }
 
+export type PodcastFrequency = "one-time" | "daily" | "weekly";
+
 export interface FlowState {
   step: FlowStep;
   userName: string;
@@ -194,6 +196,24 @@ export interface FlowState {
   additionalContext: string;
   accent: string;
   voiceId: string;
+  frequency: PodcastFrequency;
+  weeklyDay: number; // 0=Sun, 1=Mon, ..., 6=Sat
   generatedPodcast: Podcast | null;
   status: GenerationStatus;
+}
+
+export interface Subscription {
+  id: string;
+  topic: string;
+  style: string;
+  lengthMinutes: number;
+  voiceId: string;
+  accent: string;
+  frequency: string;
+  weeklyDay: number | null;
+  active: boolean;
+  lastGeneratedAt: string | null;
+  nextDueAt: string;
+  createdAt: string;
+  episodes: Podcast[];
 }

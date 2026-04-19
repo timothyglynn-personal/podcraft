@@ -1,10 +1,14 @@
 "use client";
 
 import { useFlow } from "./FlowContext";
-import { VOICE_OPTIONS, VOICE_CATEGORIES } from "@/lib/types";
+import { VOICE_OPTIONS, VOICE_CATEGORIES, PodcastFrequency } from "@/lib/types";
+import { useSession } from "next-auth/react";
+
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export default function ExtraSourcesPage() {
   const { state, update, back, generate } = useFlow();
+  const { data: session } = useSession();
 
   const handleGenerate = () => {
     generate();
@@ -88,12 +92,61 @@ export default function ExtraSourcesPage() {
           </select>
         </div>
 
+        {/* Frequency selector */}
+        <div className="glass-card p-4 mb-8">
+          <h3 className="text-sm font-semibold text-white mb-3">How often?</h3>
+          <div className="flex gap-2 mb-3">
+            {([
+              { value: "one-time" as PodcastFrequency, label: "One-time" },
+              { value: "daily" as PodcastFrequency, label: "Daily" },
+              { value: "weekly" as PodcastFrequency, label: "Weekly" },
+            ]).map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => update({ frequency: opt.value })}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                  state.frequency === opt.value
+                    ? "bg-brand-600 text-white shadow-md"
+                    : "bg-surface-dark text-gray-400 hover:text-white border border-brand-500/20"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {state.frequency === "weekly" && (
+            <select
+              value={state.weeklyDay}
+              onChange={(e) => update({ weeklyDay: parseInt(e.target.value) })}
+              className="w-full px-4 py-2 rounded-xl bg-surface-dark border border-brand-500/20 focus:border-brand-500 outline-none transition-all text-white text-sm"
+            >
+              {DAYS.map((day, i) => (
+                <option key={i} value={i}>{day}</option>
+              ))}
+            </select>
+          )}
+          {state.frequency !== "one-time" && !session && (
+            <p className="text-xs text-amber-400 mt-2">
+              Sign in to enable recurring podcasts. Without an account, this will be created as a one-time podcast.
+            </p>
+          )}
+          {state.frequency !== "one-time" && session && (
+            <p className="text-xs text-green-400 mt-2">
+              {state.frequency === "daily"
+                ? "A new episode will be generated every morning at 6am."
+                : `A new episode will be generated every ${DAYS[state.weeklyDay]} at 6am.`}
+            </p>
+          )}
+        </div>
+
         {/* Generate button */}
         <button
           onClick={handleGenerate}
           className="w-full py-4 bg-gradient-to-r from-brand-600 to-brand-400 hover:from-brand-700 hover:to-brand-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-brand-500/25 text-lg"
         >
-          Confirm and Create Podcast
+          {state.frequency === "one-time"
+            ? "Confirm and Create Podcast"
+            : `Create Podcast & Subscribe ${state.frequency === "daily" ? "Daily" : "Weekly"}`}
         </button>
       </div>
     </div>

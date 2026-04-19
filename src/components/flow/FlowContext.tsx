@@ -10,6 +10,7 @@ import {
   VOICE_OPTIONS,
   VOICE_CATEGORIES,
   SuggestedSource,
+  PodcastFrequency,
 } from "@/lib/types";
 import { getActiveProfile, saveProfile, setActiveUser, addPodcastToProfile, getPreferences } from "@/lib/profile";
 import { getRecentFeedbackSummary } from "@/lib/feedback";
@@ -37,6 +38,8 @@ const initialState: FlowState = {
   additionalContext: "",
   accent: "american",
   voiceId: VOICE_OPTIONS.find((v) => v.category === "american")?.id || VOICE_OPTIONS[0].id,
+  frequency: "one-time" as PodcastFrequency,
+  weeklyDay: 1, // Monday default
   generatedPodcast: null,
   status: { step: "idle", message: "" },
 };
@@ -271,7 +274,34 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
       // Save to user profile
       addPodcastToProfile(podcast.id);
 
-      setStatus({ step: "done", message: "Your podcast is ready!" });
+      // Create subscription if recurring
+      if (state.frequency !== "one-time") {
+        try {
+          await fetch("/api/subscriptions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              topic: state.topic,
+              style: state.style,
+              lengthMinutes: state.lengthMinutes,
+              voiceId: state.voiceId,
+              accent: state.accent,
+              frequency: state.frequency,
+              weeklyDay: state.frequency === "weekly" ? state.weeklyDay : undefined,
+              suggestedSources: state.suggestedSources.filter((s) => s.selected),
+              additionalUrls: state.additionalUrls,
+              additionalContext: state.additionalContext,
+            }),
+          });
+        } catch (e) {
+          console.error("Subscription creation failed:", e);
+        }
+      }
+
+      const doneMessage = state.frequency === "one-time"
+        ? "Your podcast is ready!"
+        : `Your podcast is ready! You're subscribed for ${state.frequency} updates.`;
+      setStatus({ step: "done", message: doneMessage });
       setState((prev) => ({ ...prev, step: "player", generatedPodcast: podcast }));
     } catch (error) {
       console.error("Generation error:", error);

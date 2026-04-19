@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "project": {
+    "initializedAt": "2026-04-18T01:49:48.587Z",
+    "merchantDisplayName": null,
+    "merchantId": "acct_1RHlWwE7QVStzx8K",
+    "projectId": "project_61UWlyOhN0rlsDJS116SR9UJNdSQz69TpengbGSFURMO",
+    "projectName": "podcraft"
+  },
+  "providers": {
+    "supabase": {
+      "accountRequestId": "fprvcnn_61UWlcJa8UVL5amdJ16SR9UJNdSQz69TpengbGSFUQsS",
+      "linkedAt": "2026-04-18T01:26:59.640Z",
+      "providerId": "prvdr_61UIXYHdsyF69pZbG52n2",
+      "providerName": "Supabase",
+      "redirectUrl": null,
+      "requestedAt": "2026-04-18T01:26:59.640Z",
+      "status": "complete"
+    }
+  },
+  "resources": {
+    "supabase-project": {
+      "configuration": {
+        "name": "podcraft"
+      },
+      "createdAt": "2026-04-18T01:52:28.181Z",
+      "lastRevealedAt": "2026-04-18T01:52:28.332Z",
+      "lastStatus": "complete",
+      "name": "supabase-project",
+      "providerId": "prvdr_61UIXYHdsyF69pZbG52n2",
+      "providerName": "Supabase",
+      "resourceId": "fres_61UWm0hUL4CSR4mrh16SR9UJNdSQz69TpengbGSFU8EC",
+      "serviceId": "project"
+    }
+  }
+}
