@@ -9,7 +9,7 @@ const config: CapacitorConfig = {
   // Comment out the server block below for local development with static export.
   server: {
     // Replace with your actual Vercel deployment URL
-    url: 'https://podcraft.vercel.app',
+    url: 'https://podcraft-mocha.vercel.app',
     cleartext: false,
   },
   ios: {
