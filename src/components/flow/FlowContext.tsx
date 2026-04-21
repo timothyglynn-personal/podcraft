@@ -242,6 +242,10 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
           articles,
         }),
       });
+      if (!scriptRes.ok) {
+        const errData = await scriptRes.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to generate script");
+      }
       const { script } = await scriptRes.json();
 
       // Generate audio
@@ -267,17 +271,21 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
       const { podcast } = audioData;
 
       // Save to localStorage
-      const saved = JSON.parse(localStorage.getItem("podcraft-podcasts") || "[]");
-      saved.unshift(podcast);
-      localStorage.setItem("podcraft-podcasts", JSON.stringify(saved.slice(0, 50)));
+      try {
+        const saved = JSON.parse(localStorage.getItem("podcraft-podcasts") || "[]");
+        saved.unshift(podcast);
+        localStorage.setItem("podcraft-podcasts", JSON.stringify(saved.slice(0, 50)));
+      } catch {
+        // localStorage unavailable (private browsing, quota exceeded)
+      }
 
       // Save to user profile
       addPodcastToProfile(podcast.id);
 
-      // Create subscription if recurring
+      // Create subscription if recurring (don't block on failure — podcast is already created)
       if (state.frequency !== "one-time") {
         try {
-          await fetch("/api/subscriptions", {
+          const subRes = await fetch("/api/subscriptions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -293,8 +301,11 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
               additionalContext: state.additionalContext,
             }),
           });
+          if (!subRes.ok) {
+            console.warn("Subscription creation failed — podcast still created as one-time");
+          }
         } catch (e) {
-          console.error("Subscription creation failed:", e);
+          console.warn("Subscription creation failed:", e);
         }
       }
 
@@ -311,7 +322,7 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
       });
       setState((prev) => ({ ...prev, step: "extra-sources" }));
     }
-  }, [state.topic, state.style, state.lengthMinutes, state.voiceId, state.suggestedSources, state.additionalUrls, state.additionalContext]);
+  }, [state.topic, state.style, state.lengthMinutes, state.voiceId, state.suggestedSources, state.additionalUrls, state.additionalContext, state.frequency, state.weeklyDay, state.accent]);
 
   return (
     <FlowContext.Provider value={{ state, update, next, back, goTo, reset, generate, showProfile, setShowProfile }}>

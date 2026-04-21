@@ -22,6 +22,19 @@ export default function ExtraSourcesPage() {
           Back
         </button>
 
+        {/* Error message from failed generation */}
+        {state.status.step === "error" && (
+          <div className="glass-card p-4 mb-6 border border-red-500/30">
+            <p className="text-red-400 text-sm">{state.status.message}</p>
+            <button
+              onClick={() => update({ status: { step: "idle", message: "" } })}
+              className="text-xs text-gray-500 hover:text-gray-300 mt-2"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Selected sources summary */}
         {state.suggestedSources.filter((s) => s.selected).length > 0 && (
           <div className="glass-card p-4 mb-6">
