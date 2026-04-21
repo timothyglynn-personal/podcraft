@@ -22,7 +22,7 @@ const FUN_MESSAGES = [
 ];
 
 export default function GeneratingPage() {
-  const { state } = useFlow();
+  const { state, generate, goTo } = useFlow();
   const [messageIdx, setMessageIdx] = useState(0);
   const [elapsed, setElapsed] = useState(0);
 
@@ -130,8 +130,22 @@ export default function GeneratingPage() {
         </div>
 
         {state.status.step === "error" && (
-          <div className="mt-4 glass-card p-4 border-red-500/30 text-red-400 text-sm">
-            {state.status.message}
+          <div className="mt-4 glass-card p-4 border border-red-500/30">
+            <p className="text-red-400 text-sm mb-4">{state.status.message}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => generate()}
+                className="flex-1 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl transition-colors"
+              >
+                Try again
+              </button>
+              <button
+                onClick={() => goTo("extra-sources")}
+                className="flex-1 py-2 border border-surface-hover text-gray-400 hover:text-white text-sm font-medium rounded-xl transition-colors"
+              >
+                Go back
+              </button>
+            </div>
           </div>
         )}
       </div>

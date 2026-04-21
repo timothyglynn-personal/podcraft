@@ -19,7 +19,7 @@ export async function textToSpeech(
       `${ELEVENLABS_URL}/text-to-speech/${voiceId}`,
       {
         method: "POST",
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(55000),
         headers: {
           "Content-Type": "application/json",
           "xi-api-key": ELEVENLABS_API_KEY,

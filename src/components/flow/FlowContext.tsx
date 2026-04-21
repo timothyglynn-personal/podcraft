@@ -320,7 +320,7 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
         step: "error",
         message: error instanceof Error ? error.message : "Something went wrong. Please try again.",
       });
-      setState((prev) => ({ ...prev, step: "extra-sources" }));
+      // Stay on generating page so the user sees the error — don't snap back
     }
   }, [state.topic, state.style, state.lengthMinutes, state.voiceId, state.suggestedSources, state.additionalUrls, state.additionalContext, state.frequency, state.weeklyDay, state.accent]);
 
