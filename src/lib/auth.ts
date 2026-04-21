@@ -1,21 +1,32 @@
 import NextAuth from "next-auth";
+import type { NextAuthResult } from "next-auth";
 import Apple from "next-auth/providers/apple";
 import Email from "next-auth/providers/email";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { Resend } from "resend";
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+let _authResult: NextAuthResult | null = null;
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db),
-  providers: [
-    Apple({
-      clientId: process.env.APPLE_CLIENT_ID!,
-      clientSecret: process.env.APPLE_CLIENT_SECRET!,
-    }),
+function getAuthResult(): NextAuthResult {
+  if (_authResult) return _authResult;
+
+  const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
+  const providers = [];
+
+  if (process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET) {
+    providers.push(
+      Apple({
+        clientId: process.env.APPLE_CLIENT_ID,
+        clientSecret: process.env.APPLE_CLIENT_SECRET,
+      })
+    );
+  }
+
+  providers.push(
     Email({
-      server: "smtp://placeholder", // Overridden by sendVerificationRequest
+      server: "smtp://placeholder",
       from: "PodCraft <noreply@podcraft.app>",
       sendVerificationRequest: async ({ identifier: email, url }) => {
         if (resend) {
@@ -40,21 +51,42 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           console.log(`[Auth] Magic link for ${email}: ${url}`);
         }
       },
-    }),
-  ],
-  session: {
-    strategy: "database",
-  },
-  pages: {
-    signIn: "/auth/signin",
-    verifyRequest: "/auth/verify",
-  },
-  callbacks: {
-    session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-      }
-      return session;
+    })
+  );
+
+  _authResult = NextAuth({
+    adapter: DrizzleAdapter(getDb()),
+    providers,
+    session: {
+      strategy: "database",
     },
-  },
-});
+    pages: {
+      signIn: "/auth/signin",
+      verifyRequest: "/auth/verify",
+    },
+    callbacks: {
+      session({ session, user }) {
+        if (session.user) {
+          session.user.id = user.id;
+        }
+        return session;
+      },
+    },
+  });
+
+  return _authResult;
+}
+
+// Lazy exports — only initialize when actually called at runtime, not at build time
+export const handlers = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  GET: (...args: any[]) => (getAuthResult().handlers.GET as any)(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  POST: (...args: any[]) => (getAuthResult().handlers.POST as any)(...args),
+};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const auth = (...args: any[]) => (getAuthResult().auth as any)(...args);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const signIn = (...args: any[]) => (getAuthResult().signIn as any)(...args);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const signOut = (...args: any[]) => (getAuthResult().signOut as any)(...args);
