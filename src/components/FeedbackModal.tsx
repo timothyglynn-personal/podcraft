@@ -157,46 +157,61 @@ export default function FeedbackModal({ podcastId, onClose }: FeedbackModalProps
           </div>
 
           {/* Voice feedback */}
-          {speechAvailable && (
-            <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">Or speak your feedback</label>
-              <div className="glass-card p-4">
-                <button
-                  onClick={isRecording ? handleStopRecording : handleStartRecording}
-                  className={`w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all ${
-                    isRecording
-                      ? "bg-red-500/20 border border-red-500/40 text-red-300"
-                      : "bg-surface-card border border-brand-500/20 text-gray-300 hover:text-white"
-                  }`}
-                >
-                  {isRecording ? (
-                    <>
-                      <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                      Listening... tap to stop
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-                      </svg>
-                      Tap to speak
-                    </>
-                  )}
-                </button>
+          <div>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">Or speak your feedback</label>
+            <div className="glass-card p-4">
+              {speechAvailable ? (
+                <>
+                  <button
+                    onClick={isRecording ? handleStopRecording : handleStartRecording}
+                    className={`w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all ${
+                      isRecording
+                        ? "bg-red-500/20 border border-red-500/40 text-red-300"
+                        : "bg-surface-card border border-brand-500/20 text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    {isRecording ? (
+                      <>
+                        <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+                        Listening... tap to stop
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+                        </svg>
+                        Tap to speak
+                      </>
+                    )}
+                  </button>
 
-                {/* Live transcript */}
-                {(voiceTranscript || interimText) && (
-                  <div className="mt-3 p-3 bg-surface-dark rounded-lg">
-                    <div className="text-xs text-gray-400 mb-1">What you said:</div>
-                    <p className="text-sm text-white">
-                      {voiceTranscript}
-                      {interimText && <span className="text-gray-400"> {interimText}</span>}
-                    </p>
-                  </div>
-                )}
-              </div>
+                  {/* Live transcript */}
+                  {(voiceTranscript || interimText) && (
+                    <div className="mt-3 p-3 bg-surface-dark rounded-lg">
+                      <div className="text-xs text-gray-400 mb-1">What you said:</div>
+                      <p className="text-sm text-white">
+                        {voiceTranscript}
+                        {interimText && <span className="text-gray-400"> {interimText}</span>}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Voice recording isn&apos;t supported in this browser. Try Safari on iOS, or type your feedback below.
+                  </p>
+                  <textarea
+                    value={voiceTranscript}
+                    onChange={(e) => setVoiceTranscript(e.target.value)}
+                    placeholder="Type your voice feedback here instead..."
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-dark border border-brand-500/20 focus:border-brand-500 outline-none text-white placeholder-gray-500 text-sm resize-none"
+                  />
+                </>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Submit */}
           <div className="flex gap-3 pt-2">
