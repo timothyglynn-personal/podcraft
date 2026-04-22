@@ -55,6 +55,7 @@ function getAuthResult(): NextAuthResult {
   );
 
   _authResult = NextAuth({
+    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
     adapter: DrizzleAdapter(getDb()),
     providers,
     session: {
