@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { getUserById, updateUserProfile, getPreferences, upsertPreferences } from "@/lib/db/queries";
 
 export async function GET() {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }

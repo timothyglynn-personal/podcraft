@@ -7,12 +7,22 @@ export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await signIn("email", { email, redirect: false });
-    setSent(true);
+    setError("");
+    try {
+      const result = await signIn("email", { email, redirect: false });
+      if (result?.error) {
+        setError("Sign-in is not available yet. Please try again later.");
+      } else {
+        setSent(true);
+      }
+    } catch {
+      setError("Sign-in is not available yet. Please try again later.");
+    }
     setLoading(false);
   };
 
@@ -25,6 +35,12 @@ export default function SignInPage() {
         </div>
 
         <div className="glass-card p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
           {/* Apple Sign In */}
           <button
             onClick={() => signIn("apple", { callbackUrl: "/" })}

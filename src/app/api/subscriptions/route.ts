@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import {
   createSubscription,
   getUserSubscriptions,
@@ -27,7 +27,7 @@ function computeNextDueAt(frequency: string, weeklyDay?: number): Date {
 }
 
 export async function GET() {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
@@ -46,7 +46,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }

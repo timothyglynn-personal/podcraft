@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/safe-auth";
 import { saveDeviceToken, removeDeviceToken } from "@/lib/db/queries";
 
 export async function POST(req: Request) {
-  const session = await auth();
+  const session = await safeAuth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
