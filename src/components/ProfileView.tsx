@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { Podcast, PodcastRequest, Subscription, STYLE_OPTIONS, VOICE_CATEGORIES, VOICE_OPTIONS } from "@/lib/types";
-import { getActiveProfile, clearActiveUser, updatePreferences, getPreferences, deletePodcastFromProfile } from "@/lib/profile";
+import { getActiveProfile, clearActiveUser, updatePreferences, getPreferences, deletePodcastFromProfile, saveProfile } from "@/lib/profile";
 import { getAllFeedback } from "@/lib/feedback";
 import PodcastCard from "./PodcastCard";
 import SubscriptionCard from "./SubscriptionCard";
@@ -22,6 +22,25 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
   const profile = getActiveProfile();
   const prefs = getPreferences();
   const feedback = getAllFeedback();
+  const [editName, setEditName] = useState(profile?.name || "");
+  const [editLocation, setEditLocation] = useState(profile?.location || "");
+  const [editOrigin, setEditOrigin] = useState(profile?.origin || "");
+
+  const saveProfileDetails = () => {
+    if (!editName.trim()) return;
+    // Save to localStorage
+    if (profile) {
+      saveProfile({ ...profile, name: editName.trim(), location: editLocation.trim(), origin: editOrigin.trim() });
+    }
+    // Sync to DB if signed in
+    if (session?.user) {
+      fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName.trim(), location: editLocation.trim(), origin: editOrigin.trim() }),
+      }).catch(() => {});
+    }
+  };
 
   // Load podcasts from localStorage + DB
   useEffect(() => {
@@ -111,6 +130,9 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
                   {profile.location} &middot; From {profile.origin}
                 </p>
               )}
+              {session?.user?.email && (
+                <p className="text-xs text-brand-400 mt-0.5">{session.user.email}</p>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -121,6 +143,16 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
               </svg>
             </button>
           </div>
+
+          {/* Sign-in prompt for unauthenticated users */}
+          {!session && (
+            <button
+              onClick={() => signIn(undefined, { callbackUrl: window.location.href })}
+              className="w-full mb-4 py-2.5 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 text-sm font-medium rounded-xl border border-brand-500/20 transition-colors"
+            >
+              Sign in to sync your podcasts and subscriptions
+            </button>
+          )}
 
           {/* Tabs */}
           <div className="flex gap-1 mb-5 bg-surface-dark rounded-xl p-1">
@@ -216,6 +248,40 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
           {/* Preferences tab */}
           {activeTab === "preferences" && (
             <div className="space-y-5">
+              {/* Editable profile fields */}
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onBlur={saveProfileDetails}
+                  className="w-full px-4 py-3 rounded-xl bg-surface-dark border border-brand-500/20 text-white text-sm outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Location</label>
+                <input
+                  type="text"
+                  value={editLocation}
+                  onChange={(e) => setEditLocation(e.target.value)}
+                  onBlur={saveProfileDetails}
+                  className="w-full px-4 py-3 rounded-xl bg-surface-dark border border-brand-500/20 text-white text-sm outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Originally from</label>
+                <input
+                  type="text"
+                  value={editOrigin}
+                  onChange={(e) => setEditOrigin(e.target.value)}
+                  onBlur={saveProfileDetails}
+                  className="w-full px-4 py-3 rounded-xl bg-surface-dark border border-brand-500/20 text-white text-sm outline-none"
+                />
+              </div>
+
+              <div className="h-px bg-gray-700/50" />
+
               <div>
                 <label className="text-sm font-medium text-gray-300 mb-2 block">Default style</label>
                 <select
@@ -356,13 +422,26 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
             </div>
           )}
 
-          {/* Switch user */}
-          <button
-            onClick={handleSwitchUser}
-            className="w-full mt-6 py-3 text-sm text-gray-400 hover:text-white border border-surface-hover rounded-xl hover:bg-surface-card transition-all"
-          >
-            Switch User
-          </button>
+          {/* Sign out / Switch user */}
+          <div className="space-y-2 mt-6">
+            {session && (
+              <button
+                onClick={() => {
+                  clearActiveUser();
+                  signOut({ callbackUrl: "/" });
+                }}
+                className="w-full py-3 text-sm text-red-400 hover:text-red-300 border border-red-500/20 rounded-xl hover:bg-red-500/10 transition-all"
+              >
+                Sign out
+              </button>
+            )}
+            <button
+              onClick={handleSwitchUser}
+              className="w-full py-3 text-sm text-gray-400 hover:text-white border border-surface-hover rounded-xl hover:bg-surface-card transition-all"
+            >
+              Switch profile
+            </button>
+          </div>
         </div>
       </div>
     </div>

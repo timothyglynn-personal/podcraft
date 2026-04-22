@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { useFlow, guessAccentFromOrigin, guessVoiceFromOrigin } from "./FlowContext";
 import { saveProfile, setActiveUser } from "@/lib/profile";
 
 export default function WelcomePage() {
   const { state, update, next } = useFlow();
+  const { data: session } = useSession();
   const [name, setName] = useState(state.userName);
   const [location, setLocation] = useState(state.userLocation);
   const [origin, setOrigin] = useState(state.userOrigin);
@@ -42,6 +44,15 @@ export default function WelcomePage() {
       createdAt: new Date().toISOString(),
     });
     setActiveUser(name.trim());
+
+    // Sync to DB if signed in
+    if (session?.user) {
+      fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), location: location.trim(), origin: origin.trim() }),
+      }).catch(() => {});
+    }
 
     next();
   };
