@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFlow } from "./FlowContext";
 
 export default function TopicPage() {
-  const { state, update, next, setShowProfile } = useFlow();
+  const { state, update, next } = useFlow();
   const [topic, setTopic] = useState(state.topic);
 
   const handleContinue = () => {
@@ -16,19 +16,10 @@ export default function TopicPage() {
   return (
     <div className="min-h-screen flex flex-col px-4 pt-6">
       {/* Top bar */}
-      <div className="flex items-center justify-between max-w-lg mx-auto w-full mb-8">
+      <div className="max-w-lg mx-auto w-full mb-8">
         <div className="text-sm text-gray-400">
           Hey <span className="text-brand-400 font-medium">{state.userName}</span>
         </div>
-        <button
-          onClick={() => setShowProfile(true)}
-          className="w-9 h-9 rounded-full bg-surface-card border border-brand-500/20 flex items-center justify-center hover:bg-surface-hover transition-colors"
-          title="Your profile"
-        >
-          <span className="text-sm font-medium text-brand-400">
-            {state.userName.charAt(0).toUpperCase()}
-          </span>
-        </button>
       </div>
 
       {/* Main content */}

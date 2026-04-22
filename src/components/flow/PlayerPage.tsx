@@ -8,7 +8,7 @@ import FeedbackModal from "../FeedbackModal";
 import ShareMenu from "../ShareMenu";
 
 export default function PlayerPage() {
-  const { state, reset, setShowProfile } = useFlow();
+  const { state, reset } = useFlow();
   const { data: session } = useSession();
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
@@ -35,16 +35,8 @@ export default function PlayerPage() {
     <div className="min-h-screen flex flex-col px-4 pt-6 pb-8">
       <div className="max-w-lg mx-auto w-full">
         {/* Top bar */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8">
           <div className="text-sm text-gray-400">Now Playing</div>
-          <button
-            onClick={() => setShowProfile(true)}
-            className="w-9 h-9 rounded-full bg-surface-card border border-brand-500/20 flex items-center justify-center hover:bg-surface-hover transition-colors"
-          >
-            <span className="text-sm font-medium text-brand-400">
-              {state.userName.charAt(0).toUpperCase()}
-            </span>
-          </button>
         </div>
 
         {/* Podcast artwork */}
