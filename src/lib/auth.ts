@@ -24,35 +24,35 @@ function getAuthResult(): NextAuthResult {
     );
   }
 
-  providers.push(
-    Email({
-      server: "smtp://placeholder",
-      from: "PodCraft <onboarding@resend.dev>",
-      sendVerificationRequest: async ({ identifier: email, url }) => {
-        if (resend) {
-          await resend.emails.send({
-            from: "PodCraft <onboarding@resend.dev>",
-            to: email,
-            subject: "Sign in to PodCraft",
-            html: `
-              <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #1a53eb;">Sign in to PodCraft</h2>
-                <p>Click below to sign in to your PodCraft account:</p>
-                <a href="${url}" style="display: inline-block; padding: 12px 24px; background: #1a53eb; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                  Sign in
-                </a>
-                <p style="color: #666; font-size: 12px; margin-top: 20px;">
-                  If you didn't request this, you can safely ignore this email.
-                </p>
-              </div>
-            `,
-          });
-        } else {
-          console.log(`[Auth] Magic link for ${email}: ${url}`);
-        }
-      },
-    })
-  );
+  providers.push({
+    id: "email",
+    name: "Email",
+    type: "email" as const,
+    maxAge: 60 * 60 * 24, // 24 hours
+    sendVerificationRequest: async ({ identifier: email, url }: { identifier: string; url: string }) => {
+      if (resend) {
+        await resend.emails.send({
+          from: "PodCraft <onboarding@resend.dev>",
+          to: email,
+          subject: "Sign in to PodCraft",
+          html: `
+            <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #1a53eb;">Sign in to PodCraft</h2>
+              <p>Click below to sign in to your PodCraft account:</p>
+              <a href="${url}" style="display: inline-block; padding: 12px 24px; background: #1a53eb; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                Sign in
+              </a>
+              <p style="color: #666; font-size: 12px; margin-top: 20px;">
+                If you didn't request this, you can safely ignore this email.
+              </p>
+            </div>
+          `,
+        });
+      } else {
+        console.log(`[Auth] Magic link for ${email}: ${url}`);
+      }
+    },
+  });
 
   _authResult = NextAuth({
     secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
