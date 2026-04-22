@@ -123,5 +123,32 @@ export async function GET() {
     results.test6_authInit = { status: "fail", error: String(e) };
   }
 
+  // Test 7: Check adapter getUserByEmail works
+  try {
+    const { DrizzleAdapter } = await import("@auth/drizzle-adapter");
+    const { getDb } = await import("@/lib/db");
+    const { users, accounts, sessions, verificationTokens } = await import("@/lib/db/schema");
+    const adapter = DrizzleAdapter(getDb(), {
+      usersTable: users,
+      accountsTable: accounts,
+      sessionsTable: sessions,
+      verificationTokensTable: verificationTokens,
+    });
+    // List all tokens in the table
+    const { eq } = await import("drizzle-orm");
+    const db = getDb();
+    const allTokens = await db.select().from(verificationTokens);
+    const allUsers = await db.select().from(users);
+    results.test7_dbState = {
+      status: "pass",
+      tokenCount: allTokens.length,
+      userCount: allUsers.length,
+      tokens: allTokens.map(t => ({ identifier: t.identifier, expires: t.expires })),
+      users: allUsers.map(u => ({ id: u.id?.slice(0, 8), email: u.email })),
+    };
+  } catch (e) {
+    results.test7_dbState = { status: "fail", error: String(e) };
+  }
+
   return NextResponse.json(results, { status: 200 });
 }
