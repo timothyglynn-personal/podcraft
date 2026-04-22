@@ -11,6 +11,7 @@ export default function PodcastPage() {
   const params = useParams();
   const id = params.id as string;
   const [podcast, setPodcast] = useState<Podcast | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     // Try localStorage first (for podcasts created in this session)
@@ -27,10 +28,27 @@ export default function PodcastPage() {
     fetch(`/api/podcasts?id=${id}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.podcast) setPodcast(data.podcast);
+        if (data.podcast) {
+          setPodcast(data.podcast);
+        } else {
+          setNotFound(true);
+        }
       })
-      .catch(() => {});
+      .catch(() => setNotFound(true));
   }, [id]);
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="text-4xl mb-4">&#x1F50D;</div>
+          <h2 className="text-xl font-bold text-white mb-2">Podcast not found</h2>
+          <p className="text-gray-400 text-sm mb-4">This podcast may have been deleted or the link is incorrect.</p>
+          <a href="/" className="text-brand-400 hover:text-brand-300 text-sm">Back to PodCraft</a>
+        </div>
+      </div>
+    );
+  }
 
   if (!podcast) {
     return (

@@ -1,6 +1,6 @@
 # PodCraft next steps
 
-**@timothyglynn | Last updated: Apr 18, 2026**
+**@timothyglynn | Last updated: Apr 21, 2026**
 
 ---
 
@@ -17,9 +17,9 @@
 * [x] PWA support with service worker
 * [x] Capacitor iOS setup
 * [x] **Stripe Projects initialized** — Supabase provisioned for database + auth
-* [x] **Database schema** — 8 tables (users, accounts, sessions, verification_tokens, user_preferences, podcasts, subscriptions, feedback, device_tokens) via Drizzle ORM
-* [x] **Auth.js v5** — Sign in with Apple + email magic links (Resend)
-* [x] **Sign-in pages** — `/auth/signin` and `/auth/verify`
+* [x] **Database schema** — 8 tables via Drizzle ORM, deployed to Supabase via pooler connection
+* [x] **Auth.js v5** — Sign in with Apple + email magic links (Resend provider)
+* [x] **Sign-in pages** — `/auth/signin` and `/auth/verify`, with session redirect
 * [x] **Subscription model** — frequency selector (one-time / daily / weekly) on ExtraSourcesPage
 * [x] **Subscriptions API** — CRUD at `/api/subscriptions`
 * [x] **Server-side generation** — `src/lib/generate-podcast.ts` shared by interactive flow and cron
@@ -28,84 +28,47 @@
 * [x] **Email notifications** — Resend integration, "Your daily podcast is ready"
 * [x] **Enhanced profile** — Subscriptions tab with episode history, pause/cancel
 * [x] **App Store prep** — privacy policy, terms of service, universal links, Info.plist updates
+* [x] **Generation bug fixes** — scriptRes.ok check, ElevenLabs timeout, error display on GeneratingPage with retry/back buttons
+* [x] **Share menu** — copy link, WhatsApp, email sharing on PlayerPage and podcast detail page
+* [x] **Sign-in flow for subscriptions** — sign-in button when selecting daily/weekly, proper button labels
+* [x] **Notification preferences** — setup card after subscription creation, toggles in profile settings
+* [x] **Persistent profile button** — visible on every page (top-right corner)
+* [x] **Sign in/out from profile** — sign-in prompt for anonymous users, sign-out button for authenticated
+* [x] **Editable profile fields** — name, location, origin editable in Settings tab, syncs to DB
+* [x] **localStorage-to-DB sync** — WelcomePage and Settings save to both localStorage and database
+* [x] **Voice feedback fallback** — text input shown on browsers without Speech Recognition API
+* [x] **Podcast not found page** — proper error state instead of infinite spinner
+* [x] **Debug endpoint removed** — auth-debug route deleted for security
+* [x] **Feedback learning loop** — user feedback summarized and passed as context to Claude for future episodes
 
-## Deployment checklist (pick up from here)
+## Current deployment
 
-All code is committed and pushed. These are configuration and deployment steps:
+* **URL:** https://podcraft-mocha.vercel.app
+* **Vercel project:** timothy-glynns-projects/podcraft-mocha
+* **Database:** Supabase (provisioned via Stripe Projects), connected via transaction pooler
+* **Email:** Resend free tier (sandbox sender, delivers only to account email)
+* **Auth:** Email magic links working, Sign in with Apple not yet configured
 
-### 1. Push the database schema
-* Open Supabase SQL Editor: `stripe projects open supabase`
-* Paste the contents of `drizzle/0000_init.sql` and execute
+## Before App Store submission
 
-### 2. Generate auth secret
-* Run: `openssl rand -base64 32`
-* Save the output — you'll need it for Vercel
+### Must do
 
-### 3. Set Vercel environment variables
-Add these in Vercel dashboard (Settings > Environment Variables):
-```
-NEXTAUTH_SECRET=<from step 2>
-NEXTAUTH_URL=https://podcraft.vercel.app
-RESEND_API_KEY=<from resend.com>
-SUPABASE_DB_URL=<from stripe projects env>
-```
+1. **Apple Developer Account** — Enroll at developer.apple.com ($99/year)
+2. **Replace TEAMID** in `public/.well-known/apple-app-site-association` with actual Apple Team ID
+3. **Sign in with Apple** — Configure in Apple Developer Console, add `APPLE_CLIENT_ID` and `APPLE_CLIENT_SECRET` to Vercel env vars (required by App Store if any third-party sign-in is offered)
+4. **APNs key** — Create .p8 key for push notifications, add `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_KEY` to Vercel env vars
+5. **Rotate Supabase credentials** — Database password is in git history from early commits. Rotate via Supabase dashboard and update Vercel env var.
+6. **Resend domain verification** — Verify a custom sending domain (e.g. podcraft.app) so emails can be sent to any address, not just the account email
+7. **App icon** — 1024x1024 PNG (no alpha, no rounded corners)
+8. **Screenshots** — iPhone 6.7" (1290x2796) and 6.5" (1284x2778), minimum 3 per size
+9. **Xcode build** — Open `ios/App/App.xcworkspace`, set signing identity, version 1.0.0/build 1, archive, upload to App Store Connect
+10. **App Store Connect** — Create app, category Entertainment, age rating 4+, privacy policy URL, submit for review
 
-### 4. Set up Resend
-* Create account at resend.com
-* Verify a sending domain (or use their sandbox for testing)
-* Copy the API key to Vercel env vars
+### Should do
 
-### 5. Deploy and test auth
-* Push triggers auto-deploy on Vercel
-* Test: sign in with email, create a podcast, verify it persists after sign-out/in
-* Test: create a "daily" subscription, check the database for the subscription record
-
-### 6. Apple Developer Account
-* Enroll at developer.apple.com ($99/year)
-* Create App ID: `com.podcraft.app`
-* Create provisioning profiles (Development + Distribution)
-
-### 7. Sign in with Apple
-* Configure in Apple Developer Console > Certificates, Identifiers & Profiles > Services
-* Get client ID and generate client secret (JWT)
-* Add `APPLE_CLIENT_ID` and `APPLE_CLIENT_SECRET` to Vercel env vars
-
-### 8. APNs for push notifications
-* Create a .p8 key in Apple Developer Console > Keys
-* Base64-encode it: `base64 -i AuthKey_XXXXXX.p8`
-* Add to Vercel: `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_KEY`
-
-### 9. Update universal links
-* Edit `public/.well-known/apple-app-site-association`
-* Replace `TEAMID` with your actual Apple Team ID
-* Commit and push
-
-### 10. App Store assets
-* App icon: 1024x1024 PNG (no alpha, no rounded corners)
-* Screenshots: iPhone 6.7" (1290x2796) and 6.5" (1284x2778) — minimum 3 per size
-* Optional: 15-30 second app preview video
-
-### 11. Xcode build and upload
-* Open `ios/App/App.xcworkspace` in Xcode
-* Set signing identity and provisioning profile
-* Set Marketing Version: 1.0.0, Build: 1
-* Product > Archive > Distribute App > App Store Connect > Upload
-
-### 12. App Store Connect submission
-* Create new app at appstoreconnect.apple.com
-* Bundle ID: `com.podcraft.app`
-* Category: Entertainment (secondary: News)
-* Age Rating: 4+
-* Pricing: Free
-* Privacy Policy URL: `https://podcraft.vercel.app/privacy`
-* Data privacy labels: email (Account), name/location (Functionality), usage data (Analytics)
-* Select the uploaded build, write "What's New", submit for review
-
-## Risks
-
-* **Vercel Hobby plan** has 10s cron timeout — may need Pro ($20/mo) for subscription generation
-* **ElevenLabs free tier** is 10K chars/month — multiple daily subscriptions will exceed this
-* **First App Store submission** often gets rejected for minor issues, budget 3-5 extra days
+* **Upgrade ElevenLabs plan** — free tier (10K chars/month) is insufficient for regular use. Starter plan is $5/mo for 30K credits.
+* **Vercel Pro plan** — Hobby plan has 10s cron timeout, may need Pro ($20/mo) for subscription generation
+* **Podcast not found timeout** — currently shows spinner until server responds; could add a client-side timeout
 
 ## Future phases (after App Store launch)
 
@@ -116,3 +79,20 @@ SUPABASE_DB_URL=<from stripe projects env>
 * [ ] Offline playback — download episodes
 * [ ] Analytics — PostHog via `stripe projects add posthog`
 * [ ] Freemium monetization
+
+## Key files reference
+
+* Database schema: `src/lib/db/schema.ts`
+* Database client: `src/lib/db/index.ts` (lazy init, pooler-compatible with `prepare: false`)
+* Auth config: `src/lib/auth.ts` (lazy init, Resend provider)
+* Safe auth wrapper: `src/lib/safe-auth.ts`
+* Subscription API: `src/app/api/subscriptions/route.ts`
+* Cron generation: `src/app/api/cron/generate-subscriptions/route.ts`
+* Server-side generation: `src/lib/generate-podcast.ts`
+* Push notifications: `src/lib/push.ts` (client), `src/lib/apns.ts` (server)
+* Email: `src/lib/email.ts`
+* Frequency selector: `src/components/flow/ExtraSourcesPage.tsx`
+* Profile: `src/components/ProfileView.tsx`
+* Share menu: `src/components/ShareMenu.tsx`
+* Flow container (persistent profile button): `src/components/flow/FlowContainer.tsx`
+* Stripe Projects state: `.projects/state.json`
