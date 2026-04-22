@@ -4,6 +4,7 @@ import Apple from "next-auth/providers/apple";
 import Resend from "next-auth/providers/resend";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { getDb } from "@/lib/db";
+import { users, accounts, sessions, verificationTokens } from "@/lib/db/schema";
 
 let _authResult: NextAuthResult | null = null;
 
@@ -33,7 +34,12 @@ function getAuthResult(): NextAuthResult {
 
   _authResult = NextAuth({
     secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
-    adapter: DrizzleAdapter(getDb()),
+    adapter: DrizzleAdapter(getDb(), {
+      usersTable: users,
+      accountsTable: accounts,
+      sessionsTable: sessions,
+      verificationTokensTable: verificationTokens,
+    }),
     providers,
     session: {
       strategy: "database",

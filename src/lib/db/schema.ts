@@ -1,46 +1,49 @@
-import { pgTable, uuid, text, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, integer, boolean, timestamp, jsonb, primaryKey } from "drizzle-orm/pg-core";
 
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
+// Auth.js tables — must match @auth/drizzle-adapter expectations
+export const users = pgTable("user", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: text("email").unique(),
   name: text("name"),
   location: text("location"),
   origin: text("origin"),
   image: text("image"),
-  emailVerified: timestamp("email_verified", { mode: "date" }),
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
-export const accounts = pgTable("accounts", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+export const accounts = pgTable("account", {
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
   type: text("type").notNull(),
   provider: text("provider").notNull(),
-  providerAccountId: text("provider_account_id").notNull(),
-  refreshToken: text("refresh_token"),
-  accessToken: text("access_token"),
-  expiresAt: integer("expires_at"),
-  tokenType: text("token_type"),
+  providerAccountId: text("providerAccountId").notNull(),
+  refresh_token: text("refresh_token"),
+  access_token: text("access_token"),
+  expires_at: integer("expires_at"),
+  token_type: text("token_type"),
   scope: text("scope"),
-  idToken: text("id_token"),
-  sessionState: text("session_state"),
-});
+  id_token: text("id_token"),
+  session_state: text("session_state"),
+}, (account) => ({
+  compositePk: primaryKey({ columns: [account.provider, account.providerAccountId] }),
+}));
 
-export const sessions = pgTable("sessions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  sessionToken: text("session_token").notNull().unique(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+export const sessions = pgTable("session", {
+  sessionToken: text("sessionToken").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { mode: "date" }).notNull(),
 });
 
-export const verificationTokens = pgTable("verification_tokens", {
+export const verificationTokens = pgTable("verificationToken", {
   identifier: text("identifier").notNull(),
-  token: text("token").notNull().unique(),
+  token: text("token").notNull(),
   expires: timestamp("expires", { mode: "date" }).notNull(),
-});
+}, (vt) => ({
+  compositePk: primaryKey({ columns: [vt.identifier, vt.token] }),
+}));
 
 export const userPreferences = pgTable("user_preferences", {
-  userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
   defaultStyle: text("default_style").default("news-briefing"),
   defaultLength: integer("default_length").default(5),
   defaultAccent: text("default_accent").default("american"),
@@ -51,7 +54,7 @@ export const userPreferences = pgTable("user_preferences", {
 
 export const podcasts = pgTable("podcasts", {
   id: text("id").primaryKey(),
-  userId: uuid("user_id").references(() => users.id),
+  userId: text("user_id").references(() => users.id),
   title: text("title").notNull(),
   topic: text("topic").notNull(),
   style: text("style").notNull(),
@@ -59,13 +62,13 @@ export const podcasts = pgTable("podcasts", {
   scriptText: text("script_text"),
   sources: jsonb("sources").default([]),
   durationSeconds: integer("duration_seconds"),
-  subscriptionId: uuid("subscription_id"),
+  subscriptionId: text("subscription_id"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
 export const subscriptions = pgTable("subscriptions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   topic: text("topic").notNull(),
   style: text("style").notNull(),
   lengthMinutes: integer("length_minutes").notNull(),
@@ -83,8 +86,8 @@ export const subscriptions = pgTable("subscriptions", {
 });
 
 export const feedback = pgTable("feedback", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").references(() => users.id),
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").references(() => users.id),
   podcastId: text("podcast_id").references(() => podcasts.id),
   quickTags: jsonb("quick_tags").default([]),
   textFeedback: text("text_feedback"),
@@ -93,8 +96,8 @@ export const feedback = pgTable("feedback", {
 });
 
 export const deviceTokens = pgTable("device_tokens", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
   platform: text("platform").default("ios"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
