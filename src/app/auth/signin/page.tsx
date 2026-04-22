@@ -1,13 +1,33 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInContent />
+    </Suspense>
+  );
+}
+
+function SignInContent() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Show error from URL params (e.g. ?error=Verification)
+  useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError === "Verification") {
+      setError("The sign-in link has expired or was already used. Please request a new one.");
+    } else if (urlError) {
+      setError(`Sign-in error: ${urlError}`);
+    }
+  }, [searchParams]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
