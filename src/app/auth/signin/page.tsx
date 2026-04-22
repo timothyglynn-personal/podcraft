@@ -14,7 +14,7 @@ export default function SignInPage() {
     setLoading(true);
     setError("");
     try {
-      const result = await signIn("email", { email, redirect: false });
+      const result = await signIn("resend", { email, redirect: false });
       if (result?.error) {
         setError(`Sign-in failed: ${result.error}`);
       } else {
