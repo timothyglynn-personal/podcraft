@@ -16,12 +16,12 @@ export default function SignInPage() {
     try {
       const result = await signIn("email", { email, redirect: false });
       if (result?.error) {
-        setError("Sign-in is not available yet. Please try again later.");
+        setError(`Sign-in failed: ${result.error}`);
       } else {
         setSent(true);
       }
-    } catch {
-      setError("Sign-in is not available yet. Please try again later.");
+    } catch (err) {
+      setError(`Sign-in error: ${err instanceof Error ? err.message : String(err)}`);
     }
     setLoading(false);
   };

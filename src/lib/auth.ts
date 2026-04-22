@@ -27,11 +27,11 @@ function getAuthResult(): NextAuthResult {
   providers.push(
     Email({
       server: "smtp://placeholder",
-      from: "PodCraft <noreply@podcraft.app>",
+      from: "PodCraft <onboarding@resend.dev>",
       sendVerificationRequest: async ({ identifier: email, url }) => {
         if (resend) {
           await resend.emails.send({
-            from: "PodCraft <noreply@podcraft.app>",
+            from: "PodCraft <onboarding@resend.dev>",
             to: email,
             subject: "Sign in to PodCraft",
             html: `
