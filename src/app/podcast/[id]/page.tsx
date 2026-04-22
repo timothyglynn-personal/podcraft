@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import AudioPlayer from "@/components/AudioPlayer";
+import ShareMenu from "@/components/ShareMenu";
 import { Podcast } from "@/lib/types";
 
 export default function PodcastPage() {
@@ -105,6 +106,10 @@ export default function PodcastPage() {
           </details>
         </div>
       )}
+      {/* Share */}
+      <div className="px-4 mt-6 max-w-lg mx-auto">
+        <ShareMenu podcastId={podcast.id} podcastTitle={podcast.title} />
+      </div>
     </main>
   );
 }

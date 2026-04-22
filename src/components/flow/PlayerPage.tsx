@@ -1,15 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { useFlow } from "./FlowContext";
 import AudioPlayer from "../AudioPlayer";
 import FeedbackModal from "../FeedbackModal";
+import ShareMenu from "../ShareMenu";
 
 export default function PlayerPage() {
   const { state, reset, setShowProfile } = useFlow();
+  const { data: session } = useSession();
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [notifEmail, setNotifEmail] = useState(session?.user?.email || "");
+  const [notifSaved, setNotifSaved] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
   const podcast = state.generatedPodcast;
+  const isRecurring = state.frequency !== "one-time" && session;
 
   if (!podcast) {
     return (
@@ -91,6 +98,65 @@ export default function PlayerPage() {
           </div>
         )}
 
+        {/* Notification setup for recurring podcasts */}
+        {isRecurring && !notifSaved && (
+          <div className="glass-card p-4 mb-6 border border-brand-500/20">
+            <h3 className="text-sm font-semibold text-white mb-1">
+              Get notified when your {state.frequency} podcast is ready
+            </h3>
+            <p className="text-xs text-gray-400 mb-3">
+              We&apos;ll let you know each time a new episode is generated.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="flex items-center gap-2 text-sm text-gray-300 mb-2">
+                  <span>Email notifications</span>
+                </label>
+                <input
+                  type="email"
+                  value={notifEmail}
+                  onChange={(e) => setNotifEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full px-3 py-2 rounded-lg bg-surface-dark border border-brand-500/20 focus:border-brand-500 outline-none text-white text-sm placeholder-gray-500"
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  // Enable push notifications
+                  try {
+                    const { registerPush } = await import("@/lib/push");
+                    await registerPush();
+                    setPushEnabled(true);
+                  } catch {
+                    // Not on native platform
+                  }
+                  // Save email preference
+                  if (notifEmail) {
+                    await fetch("/api/profile", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        preferences: { notifyEmail: true, notifyPush: true },
+                      }),
+                    }).catch(() => {});
+                  }
+                  setNotifSaved(true);
+                }}
+                className="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Save notification preferences
+              </button>
+            </div>
+          </div>
+        )}
+        {isRecurring && notifSaved && (
+          <div className="glass-card p-4 mb-6 text-center">
+            <span className="text-sm text-green-400">
+              {pushEnabled ? "Push and email" : "Email"} notifications enabled for your {state.frequency} updates.
+            </span>
+          </div>
+        )}
+
         {/* Script viewer */}
         <details className="glass-card mb-6">
           <summary className="p-4 cursor-pointer text-sm font-medium text-gray-300 hover:text-white transition-colors">
@@ -131,15 +197,7 @@ export default function PlayerPage() {
           >
             Create Another
           </button>
-          <button
-            onClick={() => {
-              const url = `${window.location.origin}/podcast/${podcast.id}`;
-              navigator.clipboard.writeText(url);
-            }}
-            className="px-4 py-3 glass-card hover:bg-surface-hover transition-colors text-gray-300 text-sm font-medium"
-          >
-            Share
-          </button>
+          <ShareMenu podcastId={podcast.id} podcastTitle={podcast.title} />
         </div>
       </div>
 

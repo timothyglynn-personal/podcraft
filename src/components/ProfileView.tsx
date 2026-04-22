@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { Podcast, PodcastRequest, Subscription, STYLE_OPTIONS, VOICE_CATEGORIES, VOICE_OPTIONS } from "@/lib/types";
 import { getActiveProfile, clearActiveUser, updatePreferences, getPreferences, deletePodcastFromProfile } from "@/lib/profile";
 import { getAllFeedback } from "@/lib/feedback";
@@ -23,16 +23,35 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
   const prefs = getPreferences();
   const feedback = getAllFeedback();
 
+  // Load podcasts from localStorage + DB
   useEffect(() => {
-    if (!profile) return;
-    const allPodcasts: Podcast[] = JSON.parse(
+    const localPodcasts: Podcast[] = JSON.parse(
       localStorage.getItem("podcraft-podcasts") || "[]"
     );
-    const userPodcasts = allPodcasts.filter((p) =>
-      profile.podcasts.includes(p.id)
-    );
-    setPodcasts(userPodcasts.length > 0 ? userPodcasts : allPodcasts);
-  }, [profile]);
+
+    if (profile) {
+      const userPodcasts = localPodcasts.filter((p) => profile.podcasts.includes(p.id));
+      setPodcasts(userPodcasts.length > 0 ? userPodcasts : localPodcasts);
+    } else {
+      setPodcasts(localPodcasts);
+    }
+
+    // Also fetch from server for signed-in users (subscription-generated podcasts)
+    if (session?.user) {
+      fetch("/api/podcasts")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.podcasts?.length) {
+            setPodcasts((prev) => {
+              const ids = new Set(prev.map((p) => p.id));
+              const serverOnly = data.podcasts.filter((p: Podcast) => !ids.has(p.id));
+              return [...prev, ...serverOnly];
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [profile, session]);
 
   // Load subscriptions from server
   useEffect(() => {
@@ -68,7 +87,7 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "podcasts", label: "Podcasts" },
-    ...(session ? [{ key: "subscriptions" as Tab, label: "Subs" }] : []),
+    { key: "subscriptions", label: "Subs" },
     { key: "preferences", label: "Settings" },
     { key: "feedback", label: "Feedback" },
   ];
@@ -156,24 +175,40 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
           {/* Subscriptions tab */}
           {activeTab === "subscriptions" && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-300 mb-3">
-                Your Subscriptions ({subscriptions.length})
-              </h3>
-              {subscriptions.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 text-sm">
-                  No subscriptions yet. Create a daily or weekly podcast to get started!
+              {!session ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 text-sm mb-4">
+                    Sign in to create daily or weekly podcast subscriptions and get notified when new episodes are ready.
+                  </p>
+                  <button
+                    onClick={() => signIn(undefined, { callbackUrl: window.location.href })}
+                    className="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl transition-colors"
+                  >
+                    Sign in
+                  </button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {subscriptions.map((sub) => (
-                    <SubscriptionCard
-                      key={sub.id}
-                      subscription={sub}
-                      onPause={handlePauseSubscription}
-                      onCancel={handleCancelSubscription}
-                    />
-                  ))}
-                </div>
+                <>
+                  <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                    Your Subscriptions ({subscriptions.length})
+                  </h3>
+                  {subscriptions.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 text-sm">
+                      No subscriptions yet. Create a daily or weekly podcast to get started!
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {subscriptions.map((sub) => (
+                        <SubscriptionCard
+                          key={sub.id}
+                          subscription={sub}
+                          onPause={handlePauseSubscription}
+                          onCancel={handleCancelSubscription}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -214,6 +249,44 @@ export default function ProfileView({ onClose }: ProfileViewProps) {
                   ))}
                 </div>
               </div>
+
+              {session && (
+                <div>
+                  <label className="text-sm font-medium text-gray-300 mb-2 block">Notifications</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center justify-between p-3 rounded-xl bg-surface-dark border border-brand-500/20">
+                      <span className="text-sm text-gray-300">Email notifications</span>
+                      <input
+                        type="checkbox"
+                        defaultChecked
+                        onChange={(e) => {
+                          fetch("/api/profile", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ preferences: { notifyEmail: e.target.checked } }),
+                          }).catch(() => {});
+                        }}
+                        className="w-4 h-4 accent-brand-500"
+                      />
+                    </label>
+                    <label className="flex items-center justify-between p-3 rounded-xl bg-surface-dark border border-brand-500/20">
+                      <span className="text-sm text-gray-300">Push notifications</span>
+                      <input
+                        type="checkbox"
+                        defaultChecked
+                        onChange={(e) => {
+                          fetch("/api/profile", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ preferences: { notifyPush: e.target.checked } }),
+                          }).catch(() => {});
+                        }}
+                        className="w-4 h-4 accent-brand-500"
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="text-sm font-medium text-gray-300 mb-2 block">Default voice</label>

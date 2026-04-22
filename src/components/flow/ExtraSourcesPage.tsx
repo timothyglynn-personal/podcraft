@@ -2,7 +2,7 @@
 
 import { useFlow } from "./FlowContext";
 import { VOICE_OPTIONS, VOICE_CATEGORIES, PodcastFrequency } from "@/lib/types";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -139,9 +139,17 @@ export default function ExtraSourcesPage() {
             </select>
           )}
           {state.frequency !== "one-time" && !session && (
-            <p className="text-xs text-amber-400 mt-2">
-              Sign in to enable recurring podcasts. Without an account, this will be created as a one-time podcast.
-            </p>
+            <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+              <p className="text-xs text-amber-400 mb-2">
+                Sign in to get {state.frequency} updates delivered to you.
+              </p>
+              <button
+                onClick={() => signIn(undefined, { callbackUrl: window.location.href })}
+                className="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-sm font-medium rounded-lg transition-colors"
+              >
+                Sign in to subscribe
+              </button>
+            </div>
           )}
           {state.frequency !== "one-time" && session && (
             <p className="text-xs text-green-400 mt-2">
@@ -159,7 +167,9 @@ export default function ExtraSourcesPage() {
         >
           {state.frequency === "one-time"
             ? "Confirm and Create Podcast"
-            : `Create Podcast & Subscribe ${state.frequency === "daily" ? "Daily" : "Weekly"}`}
+            : !session
+              ? "Create as one-time podcast"
+              : `Create Podcast & Subscribe ${state.frequency === "daily" ? "Daily" : "Weekly"}`}
         </button>
       </div>
     </div>
